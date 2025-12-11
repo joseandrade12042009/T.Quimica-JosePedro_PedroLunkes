@@ -19,7 +19,7 @@ public class TrabalhoQuimica {
             case 2 -> "²";
             case 3 -> "³";
             case 4 -> "⁴";
-            default -> String.valueOf(n); // fallback
+            default -> String.valueOf(n);
         };
     }
 
@@ -37,28 +37,16 @@ public class TrabalhoQuimica {
         potenciais.put("Sn", -0.14);
         potenciais.put("Pb", -0.13);
         potenciais.put("H2", 0.00);
-        potenciais.put("Cu", +0.34);
-        potenciais.put("Ag", +0.80);
-        potenciais.put("Au", +1.50);
+        potenciais.put("Cu", 0.34);
+        potenciais.put("Ag", 0.80);
+        potenciais.put("Au", 1.50);
 
         // Cargas iônicas mais comuns
         Map<String, Integer> cargas = new HashMap<>();
-        cargas.put("Li", 1);
-        cargas.put("K", 1);
-        cargas.put("Na", 1);
-        cargas.put("Ag", 1);
-
-        cargas.put("Mg", 2);
-        cargas.put("Ca", 2);
-        cargas.put("Zn", 2);
-        cargas.put("Fe", 2);
-        cargas.put("Sn", 2);
-        cargas.put("Pb", 2);
-        cargas.put("Ni", 2);
-        cargas.put("Cu", 2);
-
-        cargas.put("Al", 3);
-        cargas.put("Au", 3);
+        cargas.put("Li", 1); cargas.put("K", 1); cargas.put("Na", 1); cargas.put("Ag", 1);
+        cargas.put("Mg", 2); cargas.put("Ca", 2); cargas.put("Zn", 2); cargas.put("Fe", 2);
+        cargas.put("Sn", 2); cargas.put("Pb", 2); cargas.put("Ni", 2); cargas.put("Cu", 2);
+        cargas.put("Al", 3); cargas.put("Au", 3);
 
         System.out.println("=== Tabela Simplificada de Potenciais de Redução ===");
         for (Map.Entry<String, Double> e : potenciais.entrySet()) {
@@ -80,7 +68,6 @@ public class TrabalhoQuimica {
         System.out.println("\nEscolha o estado físico (s ou aq):");
         System.out.print(e1 + ": ");
         String estado1 = sc.next().toLowerCase();
-
         System.out.print(e2 + ": ");
         String estado2 = sc.next().toLowerCase();
 
@@ -89,57 +76,89 @@ public class TrabalhoQuimica {
             return;
         }
 
-        double p1 = (estado1.equals("s")? -potenciais.get(e1) : potenciais.get(e1));
-        double p2 = (estado2.equals("s")? -potenciais.get(e2) : potenciais.get(e2));
+        if (estado1.equals(estado2)) {
+            System.out.println("Inválido! Escolha um sólido e um aquoso.");
+            return;
+        }
+
+        // Potenciais padrão
+        double p1 = potenciais.get(e1);
+        double p2 = potenciais.get(e2);
 
         System.out.println("\nPotenciais escolhidos:");
         System.out.printf("%s (%s) = %.2f V%n", e1, estado1, p1);
         System.out.printf("%s (%s) = %.2f V%n", e2, estado2, p2);
 
-        String reduz, oxida;
+        // Determinar cátodo e ânodo com base no potencial e estado físico
+        String catodo, anodo;
+        double Ecat, Ean;
 
-        if (p1 > p2) {
-            reduz = e1;
-            oxida = e2;
-        } else if (p1 < p2) {
-            reduz = e2;
-            oxida = e1;
+        if (estado1.equals("s") && estado2.equals("aq")) {
+            anodo = e1; Ean = p1;
+            catodo = e2; Ecat = p2;
+        } else if (estado2.equals("s") && estado1.equals("aq")) {
+            anodo = e2; Ean = p2;
+            catodo = e1; Ecat = p1;
         } else {
-            System.out.println("Os potenciais são iguais, a pilha não funciona.");
+            System.out.println("Combinação inválida de estados para a pilha.");
             return;
         }
 
+        // Potencial da pilha
+        double fem = Ecat - Ean;
+        System.out.printf("\nO Potencial da pilha é %.2f V%n", fem);
+
+        if (fem <= 0) {
+            System.out.println("\nA pilha não funciona!");
+            return;
+        } else {
+            System.out.println("\nA pilha funciona!");
+        }
+
         System.out.println("\n=== Resultado ===");
-        System.out.println("A espécie que oxida é: " + oxida);
-        System.out.println("A espécie que reduz é: " + reduz);
+        System.out.println("Ânodo (oxida) : " + anodo);
+        System.out.println("Cátodo (reduz): " + catodo);
 
-        int cargaOx = cargas.get(oxida);
-        int cargaRed = cargas.get(reduz);
+        int cargaAn = cargas.get(anodo);
+        int cargaCat = cargas.get(catodo);
 
-        String ionOx = oxida + potenciar(cargaOx) + "⁺(aq)";
-        String ionRed = reduz + potenciar(cargaRed) + "⁺(aq)";
+        String ionAn = anodo + potenciar(cargaAn) + "⁺(aq)";
+        String ionCat = catodo + potenciar(cargaCat) + "⁺(aq)";
 
-        // Semirreações (com sobrescritos)
-        String eqOx = oxida + "(s) → " + ionOx + " + " + cargaOx + "e⁻";
-        String eqRed = ionRed + " + " + cargaRed + "e⁻ → " + reduz + "(s)";
+        // Semirreações
+        String eqOx = anodo + "(s) → " + ionAn + " + " + cargaAn + "e⁻";
+        String eqRed = ionCat + " + " + cargaCat + "e⁻ → " + catodo + "(s)";
 
         System.out.println("\n=== Semirreações ===");
         System.out.println("Oxidação: " + eqOx);
         System.out.println("Redução : " + eqRed);
 
-        // Balanceamento por elétrons
-        int m1 = cargaRed; // multiplicador da oxidação
-        int m2 = cargaOx; // multiplicador da redução
+        // Balanceamento por MMC
+        int mmc = lcm(cargaAn, cargaCat);
+        int mAn = mmc / cargaAn;
+        int mCat = mmc / cargaCat;
 
-        String eqGlobal = m1 + oxida + "(s) + " +
-                m2 + ionRed + " → " +
-                m1 + ionOx + " + " +
-                m2 + reduz + "(s)";
+        // Equação global
+        String eqGlobal =
+                (mAn == 1 ? "" : mAn) + anodo + "(s) + " +
+                (mCat == 1 ? "" : mCat) + ionCat + " → " +
+                (mAn == 1 ? "" : mAn) + ionAn + " + " +
+                (mCat == 1 ? "" : mCat) + catodo + "(s)";
 
         System.out.println("\n=== Equação Global ===");
         System.out.println(eqGlobal);
+    }
 
-        double fem = Math.abs(p1 - p2);
-        System.out.printf("\nO Potencial da pilha é %.2f V%n", fem);
+    public static int lcm(int a, int b) {
+        return a * b / gcd(a, b);
+    }
+
+    public static int gcd(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
     }
 }
